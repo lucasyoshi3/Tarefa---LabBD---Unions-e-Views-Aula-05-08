@@ -1,0 +1,143 @@
+CREATE DATABASE palestra_faculdade;
+
+CREATE TABLE Curso(
+	Codigo_Curso		int				NOT NULL,
+	Nome				VARCHAR(70)		NOT NULL,
+	Sigla				VARCHAR(10)		NOT NULL
+	PRIMARY KEY(Codigo_Curso)
+)
+
+CREATE TABLE Palestrante(
+	Codigo_Palestrante	int				NOT NULL,
+	Nome				VARCHAR(250)	NOT NULL,
+	Empresa				VARCHAR(100)	NOT NULL
+	PRIMARY KEY(Codigo_Palestrante)
+)
+
+CREATE TABLE Aluno(
+	RA					CHAR(7)			NOT NULL,
+	Nome				VARCHAR(250)	NOT NULL,
+	Codigo_Curso		int				NOT NULL
+	PRIMARY KEY(RA)
+	FOREIGN KEY(Codigo_Curso) REFERENCES Curso(Codigo_Curso)
+)
+
+CREATE TABLE Palestra(
+	Codigo_Palestra		int				IDENTITY,
+	Titulo				VARCHAR(MAX)	NOT NULL,
+	Carga_Horaria		int				NULL,
+	Data				DATETIME		NOT NULL,
+	Codigo_Palestrante	int				NOT NULL
+	PRIMARY KEY(Codigo_Palestra)
+	FOREIGN KEY(Codigo_Palestrante) REFERENCES Palestra(Codigo_Palestrante)
+)
+
+
+Alter Table Palestra
+Drop Codigo_Palestrante 
+DROP TABLE Palestra
+DROP TABLE Palestrante
+
+CREATE TABLE Alunos_Inscritos(
+	RA					CHAR(7)			NOT NULL,
+	Codigo_Palestra		int				NOT NULL
+	PRIMARY KEY(RA, Codigo_Palestra)
+	FOREIGN KEY(RA) REFERENCES Aluno(RA),
+	FOREIGN KEY(Codigo_Palestra) REFERENCES Palestra(Codigo_Palestra)
+)
+
+CREATE TABLE Nao_Alunos(
+	RG					VARCHAR(9)		NOT NULL,
+	Orgao_Exp			CHAR(5)			NOT NULL,
+	Nome				VARCHAR(250)	NOT NULL
+	PRIMARY KEY(RG, Orgao_Exp)
+)
+
+CREATE TABLE Nao_Alunos_Inscritos(
+	Codigo_Palestra		int				NOT NULL,
+	RG					VARCHAR(9)		NOT NULL,
+	Orgao_Exp			CHAR(5)			NOT NULL
+	PRIMARY KEY(Codigo_Palestra, RG, Orgao_Exp)
+	FOREIGN KEY(Codigo_Palestra) REFERENCES Palestra(Codigo_Palestra),
+	FOREIGN KEY(RG, Orgao_Exp)	REFERENCES Nao_Alunos(RG, Orgao_Exp)
+)
+
+-- Inserir dados na tabela Curso
+INSERT INTO Curso (Codigo_Curso, Nome, Sigla)
+VALUES
+(1, 'Engenharia da Computação', 'EC'),
+(2, 'Matemática', 'MAT'),
+(3, 'Administração', 'ADM');
+
+-- Inserir dados na tabela Palestrante
+INSERT INTO Palestrante (Codigo_Palestrante, Nome, Empresa)
+VALUES
+(1, 'Ana Souza', 'TechCorp'),
+(2, 'Carlos Lima', 'DataScience Ltda'),
+(3, 'Mariana Silva', 'Innovate Solutions');
+
+-- Inserir dados na tabela Aluno
+INSERT INTO Aluno (RA, Nome, Codigo_Curso)
+VALUES
+('A123456', 'João Pereira', 1),
+('A234567', 'Maria Oliveira', 2),
+('A345678', 'Pedro Costa', 3);
+
+-- Inserir dados na tabela Palestra
+INSERT INTO Palestra (Titulo, Carga_Horaria, Data, Codigo_Palestrante)
+VALUES
+('Introdução à Inteligência Artificial', 3, CONVERT(DATETIME, '2024-08-15 09:00:00', 120), 1),
+('Fundamentos de Algoritmos', 2, CONVERT(DATETIME, '2024-08-16 14:00:00', 120), 2),
+('Gestão de Projetos', 4, CONVERT(DATETIME, '2024-08-17 10:00:00', 120), 3);
+
+-- Inserir dados na tabela Alunos_Inscritos
+INSERT INTO Alunos_Inscritos (RA, Codigo_Palestra)
+VALUES
+('A123456', 1),
+('A234567', 2),
+('A345678', 3);
+
+-- Inserir dados na tabela Nao_Alunos
+INSERT INTO Nao_Alunos (RG, Orgao_Exp, Nome)
+VALUES
+('123456789', 'SSP', 'Lucia Martins'),
+('987654321', 'POL', 'Fernando Oliveira'),
+('456789123', 'SSP', 'Juliana Santos');
+
+-- Inserir dados na tabela Nao_Alunos_Inscritos
+INSERT INTO Nao_Alunos_Inscritos (Codigo_Palestra, RG, Orgao_Exp)
+VALUES
+(1, '123456789', 'SSP'),
+(2, '987654321', 'POL'),
+(3, '456789123', 'SSP');
+
+
+
+
+CREATE VIEW v_Alunos
+AS
+SELECT	ai.RA					AS Num_Documento, 
+		a.nome					AS Nome_Pessoa,
+		Titulo					AS Titulo_Palestra,
+		Palestrante.Nome        AS Nome_Palestra,
+		Carga_Horaria			
+		Data 
+FROM Alunos_Inscritos as ai, Palestra, Palestrante
+INNER JOIN Aluno as a on a.RA = ai.RA
+UNION
+SELECT  CONCAT(Nao_Alunos_Inscritos.RG, Nao_Alunos_Inscritos.Orgao_Exp) AS Num_Documento,
+		Nome				 AS Nome_Pessoa
+FROM Nao_Alunos, Nao_Alunos_Inscritos
+
+
+SELECT	ai.RA					AS Num_Documento, 
+		a.nome					AS Nome_Pessoa,
+		Titulo					AS Titulo_Palestra,
+		Palestrante.Nome        AS Nome_Palestra,
+		Carga_Horaria			
+		Data 
+FROM Alunos_Inscritos as ai, Aluno as a,Palestra, Palestrante
+WHERE ai.RA = a.RA 
+	AND Palestra.Codigo_Palestrante = Palestrante.Codigo_Palestrante 
+	AND ai.Codigo_Palestra = Palestra.Codigo_Palestra
+	
